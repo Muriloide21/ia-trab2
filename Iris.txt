@@ -1,0 +1,10 @@
+\begin{tabular}{ccc}
+\hline
+     Classificador     &  Média Acurácias  &  Desvio Padrão  \\
+\hline
+         ZeroR         &     0.333333      &        0        \\
+         OneR          &     0.946667      &    0.0756862    \\
+       Centroide       &     0.933333      &    0.0628539    \\
+ Naive Bayes Gaussiano &     0.953333      &    0.0449966    \\
+\hline
+\end{tabular}

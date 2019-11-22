@@ -1,0 +1,10 @@
+\begin{tabular}{ccc}
+\hline
+    Classificador     &  Média Acurácias  &  Desvio Padrão  \\
+\hline
+         Knn          &     0.928057      &    0.0274986    \\
+  Árvore de Decisão   &     0.915899      &    0.0411327    \\
+    Redes Neurais     &     0.839088      &    0.184053     \\
+ Florestas de Árvores &     0.959734      &    0.0325656    \\
+\hline
+\end{tabular}

@@ -118,21 +118,28 @@ class Centroide(BaseEstimator, ClassifierMixin):
         return([self.classes[np.argmin([max(max(euclidean_distances([x], [centroide]))) for centroide in self.centroids])] for x in X])
             #print(x)
 
-# iris = datasets.load_iris()
-# knn = KNeighborsClassifier()
-# grade = {'n_neighbors': [1, 3, 5]}
-# gs = GridSearchCV(estimator=knn, param_grid = grade, scoring='accuracy', n_jobs=-1, cv = 4)
-# scores = cross_val_score(gs, iris.data, iris.target, scoring='accuracy', cv = 10)
-# print ('CV Accuracy: %.3f +/- %.3f' % (np.mean(scores), st.stdev(scores)))
-# print (scores)
 
 datasets = [datasets.load_iris(), datasets.load_digits(), datasets.load_wine(), datasets.load_breast_cancer()]
-classificadores = [ZeroR(), OneR(), Centroide()]
-for d in datasets:
+classificadores = [ZeroR(), OneR(), Centroide(), GaussianNB()]
+classificadores2 = [KNeighborsClassifier(), DecisionTreeClassifier(), MLPClassifier(), RandomForestClassifier()]
+hiperparametros = [{'n_neighbors': [1, 3, 5]}, {'max_depth' : [None, 3, 5, 10]}, {'max_iter' : [50, 100, 200], 'hidden_layer_sizes' : [(15,)]}, {'n_estimators' : [10, 20, 50, 100]}]
+datasets_names = ["Iris", "Digits", "Wine", "Breast Cancer"]
+for i,d in enumerate(datasets):
     base = d
-    for c in classificadores:
-        scores = cross_val_score(c, base.data, base.target, cv=10)
-        print("Classificador: "+c.get_name())
-        print('CV Accuracy: %.5f +/- %.5f' % (st.mean(scores), st.stdev(scores)))
+    print(datasets_names[i])
+    # for c in classificadores:
+    #     scores = cross_val_score(c, base.data, base.target, cv=10)
+    #     print("Classificador: "+c.get_name())
+    #     print('CV Accuracy: %.5f +/- %.5f' % (st.mean(scores), st.stdev(scores)))
+    #     #print (scores)
+    # print("--------------------------------------")
+    for index,m in enumerate(classificadores2):
+        #print(index)
+        #print(hiperparametros[index])
+        grade = hiperparametros[index]
+        gs = GridSearchCV(estimator=m, param_grid = grade, scoring='accuracy', cv = 4)
+        gs.fit(base.data, base.target)
+        print(gs.best_params_)
+        scores = cross_val_score(gs, base.data, base.target, scoring='accuracy', cv = 10)
+        print ('CV Accuracy: %.5f +/- %.5f' % (np.mean(scores), st.stdev(scores)))
         #print (scores)
-    print("--------------------------------------")

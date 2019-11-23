@@ -4,7 +4,9 @@
 \hline
          ZeroR         &     0.333333      &        0        \\
          OneR          &     0.946667      &    0.0756862    \\
+  OneRProbabilistico   &       0.92        &    0.0819515    \\
        Centroide       &     0.933333      &    0.0628539    \\
+     CentroideOneR     &     0.926667      &    0.0662953    \\
  Naive Bayes Gaussiano &     0.953333      &    0.0449966    \\
 \hline
 \end{tabular}

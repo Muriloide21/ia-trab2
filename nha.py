@@ -19,6 +19,7 @@ import statistics as st
 import seaborn as sns
 import matplotlib.pyplot as plt
 from tabulate import tabulate
+from random import random
 
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
@@ -46,7 +47,6 @@ class ZeroR(BaseEstimator, ClassifierMixin):
         y = [self.classeMaisFrequente]*l
 		# Input validation
         return y
-
 
 class OneR(BaseEstimator, ClassifierMixin):
      
@@ -96,8 +96,6 @@ class OneR(BaseEstimator, ClassifierMixin):
         predict = [self.regras[i] for i in feature.astype(np.int64)]
         return predict
 
-
-
 class Centroide(BaseEstimator, ClassifierMixin):
     def get_name(self):
         return "Centroide"
@@ -121,39 +119,126 @@ class Centroide(BaseEstimator, ClassifierMixin):
         return([self.classes[np.argmin([max(max(euclidean_distances([x], [centroide]))) for centroide in self.centroids])] for x in X])
             #print(x)
 
-def example1():
-    mydata=[1,2,3,4,5,6,12]
-    sns.boxplot(y=mydata) # Also accepts numpy arrays
-    plt.show()
+class OneRProbabilistico(BaseEstimator, ClassifierMixin):
+     
+    def get_name(self):
+        return "OneR"
 
-def example2():
-    df = sns.load_dataset('iris')
-    #returns a DataFrame object. This dataset has 150 examples.
-    #print(df)
-    # Make boxplot for each group
-    sns.boxplot( data=df.loc[:,:] )
-    # loc[:,:] means all lines and all columns
-    plt.show()
+    def __init__(self, demo_param='demo'):
+        self.demo_param = demo_param
+
+    def fit(self, X, y):
+
+		# Check that X and y have correct shape
+        X, y = check_X_y(X, y)
+		# Store the classes seen during fit
+        self.classes_ = unique_labels(y)
+        self.disc = KBinsDiscretizer(n_bins = len(self.classes_), encode='ordinal', strategy = 'quantile')
+        X = self.disc.fit_transform(X)
+        maior_soma = 0
+        definitivo = []
+        for index,feature in enumerate(X.T):
+            values_features = unique_labels(feature)
+            soma = 0
+            tmp = []
+            for v in values_features:
+                indexes = np.where(v == feature)
+                aux = [y[i] for i in indexes[0]]
+                nha = np.bincount(aux)
+                #print(nha)
+                tmp.append(nha)
+                soma += max(nha)
+            #print("Chegou aqui")
+            if(soma > maior_soma):
+                maior_soma = soma
+                definitivo = tmp
+                self.index_feature_definitiva = index
+        #print(definitivo)
+        values_feature = unique_labels(X.T[self.index_feature_definitiva])
+        self.regras = [[x/sum(definitivo[i]) for x in definitivo[i]] for i in values_feature.astype(np.int64)]
+        #print(self.regras)
+        #Caso as regras baseadas em uma feature não abranjam todas as classes, a classe default é 0
+        while(len(self.regras) < len(self.classes_)):
+            self.regras.append([1/len(self.classes_)] * len(self.classes_))
+		# Return the classifier
+        return self
+
+    def predict(self, X):
+        X = self.disc.fit_transform(X)
+        def sorteia(vetor):
+            while True:
+                for i,prob in enumerate(vetor):
+                    aux = random()
+                    if aux < prob:
+                        return i
+        feature = X.T[self.index_feature_definitiva]
+        predict = [sorteia(self.regras[i]) for i in feature.astype(np.int64)]
+        return predict
+
+class CentroideOneR(BaseEstimator, ClassifierMixin):
+    def get_name(self):
+        return "Centroide"
+
+    def __init__(self, demo_param='demo'):
+        self.demo_param = demo_param
+
+    def fit(self, X, y):
+        self.classes = unique_labels(y)
+        X_not_discretized = X
+        self.disc = KBinsDiscretizer(n_bins = len(self.classes), encode='ordinal', strategy = 'quantile')
+        X = self.disc.fit_transform(X)
+        maior_soma = 0
+        definitivo = []
+        for index,feature in enumerate(X.T):
+            values_features = unique_labels(feature)
+            soma = 0
+            tmp = []
+            for v in values_features:
+                indexes = np.where(v == feature)
+                aux = [y[i] for i in indexes[0]]
+                nha = np.bincount(aux)
+                #print(nha)
+                tmp.append(nha)
+                soma += max(nha)
+            #print("Chegou aqui")
+            if(soma > maior_soma):
+                maior_soma = soma
+                definitivo = tmp
+                self.index_feature_definitiva = index
+        self.centroids = []
+        values_feature_definitiva = X.T[self.index_feature_definitiva]
+        for v in unique_labels(values_feature_definitiva):
+            indexes = np.where(v == values_feature_definitiva)
+            centroid = []
+            for feature in X_not_discretized.T:
+                mean_values_feature = st.mean([feature[k] for k in indexes[0]])
+                centroid.append(mean_values_feature)
+            self.centroids.append(centroid)
+        print(self.centroids)
+        self.regras = [np.argmax(definitivo[i]) for i in values_feature_definitiva.astype(np.int64)]
+
+    def predict(self, X):
+        return([self.classes[self.regras[np.argmin([max(max(euclidean_distances([x], [centroide]))) for centroide in self.centroids])]] for x in X])
+            #print(x)
 
 def save_plot(filename,data,x_labels):
     fig = plt.figure()
     graph = sns.boxplot(data=data,showmeans=True)
     graph.set_xticklabels(x_labels)
     plt.setp(graph.get_xticklabels(),rotation = 5)
-
-    if len(data) >= 10:
-        fig.set_size_inches(14,5)
-        sns.set(font_scale=0.8) 
+    sns.set(font_scale=0.8)
     
     fig.savefig('graficos/'+filename+'.eps', dpi=fig.dpi)
 
 datasets = [datasets.load_iris(), datasets.load_digits(), datasets.load_wine(), datasets.load_breast_cancer()]
-classificadores = [ZeroR(), OneR(), Centroide(), GaussianNB()]
+classificadores = [ZeroR(), OneR(), OneRProbabilistico(), Centroide(), CentroideOneR(), GaussianNB()]
 classificadores2 = [KNeighborsClassifier(), DecisionTreeClassifier(), MLPClassifier(), RandomForestClassifier()]
 hiperparametros = [{'n_neighbors': [1, 3, 5]}, {'max_depth' : [None, 3, 5, 10]}, {'max_iter' : [50, 100, 200], 'hidden_layer_sizes' : [(15,)]}, {'n_estimators' : [10, 20, 50, 100]}]
 datasets_names = ["Iris", "Digits", "Wine", "Breast Cancer"]
-classificadores_nomes = ["ZeroR", "OneR", "Centroide", "Naive Bayes Gaussiano"]
+classificadores_nomes = ["ZeroR", "OneR", "OneRProbabilistico", "Centroide", "CentroideOneR", "Naive Bayes Gaussiano"]
 classificadores2_nomes = ["Knn", "Árvore de Decisão", "Redes Neurais", "Florestas de Árvores"]
+
+save_plot("sacrificio", [[0]]*len(classificadores_nomes), classificadores_nomes)
 
 for i,d in enumerate(datasets):
     base = d
@@ -173,7 +258,6 @@ for i,d in enumerate(datasets):
         standard_deviations.append(st.stdev(scores))
         vet_scores.append(scores)
         #print (scores)
-    print("--------------------------------------")
     for index,m in enumerate(classificadores2):
         #print(index)
         #print(hiperparametros[index])
@@ -207,12 +291,17 @@ for i,d in enumerate(datasets):
     file = open(dataset_name+"2.txt", 'w')
     file.write(tabulate(table2,header,stralign="center",numalign="center",tablefmt="latex"))
     file.close()
+    print("\n\n")
 
-save_plot("sem_Hiperparametros", vet_scores, classificadores_nomes)
-save_plot("com_Hiperparametros", vet_scores2, classificadores2_nomes)
-# example1()
-# example2()
+    save_plot(datasets_names[i]+"-com_Hiperparametros", vet_scores2, classificadores2_nomes)
+    save_plot(datasets_names[i]+"-sem_Hiperparametros", vet_scores, classificadores_nomes)
+
           
-
-
+# nn = CentroideOneR()
+# base = datasets.load_iris()
+# x_train, x_test, y_train, y_test = train_test_split(base.data, base.target, test_size = 0.4, random_state = 0)
+# nn.fit(x_train, y_train)
+# y_pred = nn.predict(x_test)
+# scores = cross_val_score(nn, base.data, base.target, cv=10)
+# print('CV Accuracy: %.5f +/- %.5f' % (st.mean(scores), st.stdev(scores)))
 

@@ -4,6 +4,7 @@
 \hline
          ZeroR         &     0.627427      &   0.00465054    \\
          OneR          &     0.843621      &    0.0237839    \\
+  OneRProbabilistico   &     0.797661      &    0.0513055    \\
        Centroide       &     0.891364      &    0.0408923    \\
  Naive Bayes Gaussiano &      0.93868      &    0.0317418    \\
 \hline

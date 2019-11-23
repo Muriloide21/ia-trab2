@@ -135,6 +135,18 @@ def example2():
     # loc[:,:] means all lines and all columns
     plt.show()
 
+def save_plot(filename,data,x_labels):
+    fig = plt.figure()
+    graph = sns.boxplot(data=data,showmeans=True)
+    graph.set_xticklabels(x_labels)
+    plt.setp(graph.get_xticklabels(),rotation = 5)
+
+    if len(data) >= 10:
+        fig.set_size_inches(14,5)
+        sns.set(font_scale=0.8) 
+    
+    fig.savefig('graficos/'+filename+'.eps', dpi=fig.dpi)
+
 datasets = [datasets.load_iris(), datasets.load_digits(), datasets.load_wine(), datasets.load_breast_cancer()]
 classificadores = [ZeroR(), OneR(), Centroide(), GaussianNB()]
 classificadores2 = [KNeighborsClassifier(), DecisionTreeClassifier(), MLPClassifier(), RandomForestClassifier()]
@@ -150,7 +162,8 @@ for i,d in enumerate(datasets):
     mean_accuracies2 = []
     standard_deviations2 = []
     dataset_name = datasets_names[i]
-
+    vet_scores = []
+    vet_scores2 = []
     print(dataset_name)
     for ind,c in enumerate(classificadores):
         scores = cross_val_score(c, base.data, base.target, cv=10)
@@ -158,6 +171,7 @@ for i,d in enumerate(datasets):
         print('CV Accuracy: %.5f +/- %.5f' % (st.mean(scores), st.stdev(scores)))
         mean_accuracies.append(st.mean(scores))
         standard_deviations.append(st.stdev(scores))
+        vet_scores.append(scores)
         #print (scores)
     print("--------------------------------------")
     for index,m in enumerate(classificadores2):
@@ -168,11 +182,12 @@ for i,d in enumerate(datasets):
         gs.fit(base.data, base.target)
         print("Classificador: ", classificadores2_nomes[index])
         print(gs.best_params_)
-        scores = cross_val_score(gs, base.data, base.target, scoring='accuracy', cv = 10)
-        print ('CV Accuracy: %.5f +/- %.5f' % (np.mean(scores), st.stdev(scores)))
-        mean_accuracies2.append(st.mean(scores))
-        standard_deviations2.append(st.stdev(scores))
-        #print (scores)
+        scores2 = cross_val_score(gs, base.data, base.target, scoring='accuracy', cv = 10)
+        print ('CV Accuracy: %.5f +/- %.5f' % (np.mean(scores2), st.stdev(scores2)))
+        mean_accuracies2.append(st.mean(scores2))
+        standard_deviations2.append(st.stdev(scores2))
+        vet_scores2.append(scores2)
+        #print (scores2)
 
     table = []
     for j in range(len(classificadores)):
@@ -192,8 +207,12 @@ for i,d in enumerate(datasets):
     file = open(dataset_name+"2.txt", 'w')
     file.write(tabulate(table2,header,stralign="center",numalign="center",tablefmt="latex"))
     file.close()
-        # example1()
-        # example2()  
+
+save_plot("sem_Hiperparametros", vet_scores, classificadores_nomes)
+save_plot("com_Hiperparametros", vet_scores2, classificadores2_nomes)
+# example1()
+# example2()
+          
 
 
 
